@@ -106,6 +106,19 @@ public class ShopContract {
             + " VALUES"
             + "(?,?,?,?,?,?,?)";
 
+    static final String UPDATE_CLIENT_ADMIN = "UPDATE "
+            + CLIENTS_TABLE_NAME
+            + " SET " + CLIENT_NAME_COLUMN + " =?"
+            + "," + CLIENT_SURNAME_COLUMN + " =?"
+            + "," + CLIENT_PHONE_COLUMN + " =?"
+            + "," + CLIENT_ADDRESS_COLUMN + " =?"
+            + "," + CLIENT_EMAIL_COLUMN + " =?"
+            + "," + CLIENT_PASSWORD_COLUMN + " =?"
+            +  " WHERE " + CLIENT_ID_COLUMN + " =?";
+
+    static final String DELETE_CLIENT = "DELETE FROM " + CLIENTS_TABLE_NAME
+            + " WHERE " + CLIENT_ID_COLUMN + " =?";
+
     static final String GET_CLIENT = "SELECT *"
             + " FROM " + CLIENTS_TABLE_NAME
             + " WHERE " + CLIENT_EMAIL_COLUMN + " = ? AND " + CLIENT_PASSWORD_COLUMN + " = ?";

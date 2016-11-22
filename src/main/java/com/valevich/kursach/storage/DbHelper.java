@@ -96,8 +96,8 @@ public class DbHelper {
     }
 
     public long insertClient(String name, String surname,
-                               String phone, String address,
-                               String email, String password) throws SQLException {
+                                  String phone, String address,
+                                  String email, String password) throws SQLException {
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_CLIENT_ADMIN,
                      Statement.RETURN_GENERATED_KEYS)) {
@@ -118,6 +118,34 @@ public class DbHelper {
                 if (generatedKeys.next()) return generatedKeys.getLong(1);
                 else throw new SQLException(ConstantsManager.NO_ID_OBTAINED);
             }
+        }
+    }
+
+    public boolean updateClient(String name, String surname,
+                                     String phone, String address,
+                                     String email, String password,int id) throws SQLException {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(ShopContract.UPDATE_CLIENT_ADMIN)) {
+
+            statement.setString(1, name);
+            statement.setString(2,surname);
+            statement.setString(3, phone);
+            statement.setString(4,address);
+            statement.setString(5, email);
+            statement.setString(6,password);
+            statement.setInt(7,id);
+
+            return statement.executeUpdate() != 0;
+
+        }
+    }
+
+    public boolean removeClient(int id) throws SQLException {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(ShopContract.DELETE_CLIENT)) {
+
+            statement.setInt(1,id);
+            return statement.executeUpdate() != 0;
         }
     }
 

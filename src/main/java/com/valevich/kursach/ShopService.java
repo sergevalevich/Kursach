@@ -9,6 +9,8 @@ import com.valevich.kursach.model.request.category.NewCategoryPayload;
 import com.valevich.kursach.model.request.category.UpdateCategoryPayload;
 import com.valevich.kursach.model.request.client.AddClientPayload;
 import com.valevich.kursach.model.request.client.ClientPayload;
+import com.valevich.kursach.model.request.client.DeleteClientPayload;
+import com.valevich.kursach.model.request.client.UpdateClientPayload;
 import com.valevich.kursach.model.response.DefaultResponse;
 import com.valevich.kursach.model.response.DefaultInsertResponse;
 import com.valevich.kursach.model.response.user.ClientRegistration;
@@ -205,6 +207,62 @@ public class ShopService {
                         ? ConstantsManager.DUPLICATE_EMAIL
                         : ConstantsManager.INVALID_REQUEST_FRIENDLY;
                 return dataToJson(new DefaultResponse(message));
+            }
+        });
+
+        post("/client/update", (req, res) -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                UpdateClientPayload clientToUpdate = mapper.readValue(req.body(), UpdateClientPayload.class);
+                if (!clientToUpdate.isValid()) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                if (!dbHelper.isAccessAllowed(clientToUpdate.getEmployeeToken(), ShopContract.RolesContract.EDIT_CLIENTS)) {
+                    res.status(HTTP_FORBIDDEN);
+                    return dataToJson(new DefaultResponse(ConstantsManager.ACCESS_NOT_ALLOWED));
+                }
+                boolean hasUpdated = dbHelper.updateClient(clientToUpdate.getName(),
+                        clientToUpdate.getSurname(),
+                        clientToUpdate.getPhoneNumber(),
+                        clientToUpdate.getAddress(),
+                        clientToUpdate.getEmail(),
+                        clientToUpdate.getPassword(),
+                        clientToUpdate.getId());
+
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
+            } catch (JsonParseException | JsonMappingException | SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                String message = e.getMessage() != null && e.getMessage().contains("Duplicate")
+                        ? ConstantsManager.DUPLICATE_EMAIL
+                        : ConstantsManager.INVALID_REQUEST_FRIENDLY;
+                return dataToJson(new DefaultResponse(message));
+            }
+        });
+
+        post("/client/remove", (req, res) -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                DeleteClientPayload clientToRemove = mapper.readValue(req.body(), DeleteClientPayload.class);
+                if (!clientToRemove.isValid()) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                if (!dbHelper.isAccessAllowed(clientToRemove.getToken(), ShopContract.RolesContract.EDIT_CLIENTS)) {
+                    res.status(HTTP_FORBIDDEN);
+                    return dataToJson(new DefaultResponse(ConstantsManager.ACCESS_NOT_ALLOWED));
+                }
+
+                boolean hasDeleted = dbHelper.removeClient(clientToRemove.getId());
+
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
+            } catch (JsonParseException | JsonMappingException | SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
             }
         });
     }
