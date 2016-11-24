@@ -53,7 +53,7 @@ public class ShopContract {
     static final String PRODUCT_CATEGORY_ID_COLUMN = "categoryId";
     static final String PRODUCT_STOCK_ID_COLUMN = "stockId";
     //order table
-    static final String ORDER_TABLE_NAME = "`order`";
+    static final String ORDER_TABLE_NAME = "orders";
     static final String ORDER_ID_COLUMN = "id";
     static final String ORDER_DATE_COLUMN = "date";
     static final String ORDER_CLIENT_ID_COLUMN = "client_id";
@@ -173,7 +173,7 @@ public class ShopContract {
             + " INNER JOIN " + STATUS_TABLE_NAME
             + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
             + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
-            + " INNER JOIN " + EMPLOYEES_TABLE_NAME
+            + " LEFT JOIN " + EMPLOYEES_TABLE_NAME
             + " ON " + ORDER_TABLE_NAME + "." + ORDER_EMPLOYEE_ID_COLUMN
             + " = " + EMPLOYEES_TABLE_NAME + "." + EMPLOYEE_ID_COLUMN
             + " RIGHT JOIN " + CLIENTS_TABLE_NAME
@@ -194,16 +194,16 @@ public class ShopContract {
             + " INNER JOIN " + STATUS_TABLE_NAME
             + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
             + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
-            + " INNER JOIN " + EMPLOYEES_TABLE_NAME
+            + " LEFT JOIN " + EMPLOYEES_TABLE_NAME
             + " ON " + ORDER_TABLE_NAME + "." + ORDER_EMPLOYEE_ID_COLUMN
             + " = " + EMPLOYEES_TABLE_NAME + "." + EMPLOYEE_ID_COLUMN
             + " INNER JOIN " + CLIENTS_TABLE_NAME
             + " ON " + CLIENTS_TABLE_NAME + "." + CLIENT_ID_COLUMN
             + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN
             + " WHERE "
-            + CLIENT_EMAIL_COLUMN
+            + CLIENTS_TABLE_NAME + "." + CLIENT_EMAIL_COLUMN
             + " = ? AND "
-            + CLIENT_PASSWORD_COLUMN + " = ?";
+            + CLIENTS_TABLE_NAME + "." + CLIENT_PASSWORD_COLUMN + " = ?";
 
 
 

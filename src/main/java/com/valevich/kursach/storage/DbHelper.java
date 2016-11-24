@@ -259,7 +259,7 @@ public class DbHelper {
     private ProductItem createProduct(ResultSet result) throws SQLException {
         return new ProductItem(
                 result.getInt(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.PRODUCT_ID_COLUMN),
-                result.getString(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.STOCK_ADDRESS_COLUMN),
+                result.getString(ShopContract.STOCK_TABLE_NAME + "." + ShopContract.STOCK_ADDRESS_COLUMN),
                 result.getString(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.PRODUCT_TITLE_COLUMN),
                 result.getString(ShopContract.PRODUCT_FEATURES_COLUMN),
                 result.getInt(ShopContract.PRODUCT_SUPPLY_PERIOD_COLUMN),
@@ -276,11 +276,11 @@ public class DbHelper {
         ClientInfo nextClient = new ClientInfo();
         nextClient.setId(resultSet.getInt(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_ID_COLUMN));
         nextClient.setName(resultSet.getString(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_NAME_COLUMN));
-        nextClient.setSurname(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_SURNAME_COLUMN));
-        nextClient.setPhoneNumber(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_PHONE_COLUMN));
-        nextClient.setAddress(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_ADDRESS_COLUMN));
-        nextClient.setEmail(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_EMAIL_COLUMN));
-        nextClient.setToken(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_TOKEN_COLUMN));
+        nextClient.setSurname(resultSet.getString(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_SURNAME_COLUMN));
+        nextClient.setPhoneNumber(resultSet.getString(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_PHONE_COLUMN));
+        nextClient.setAddress(resultSet.getString(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_ADDRESS_COLUMN));
+        nextClient.setEmail(resultSet.getString(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_EMAIL_COLUMN));
+        nextClient.setToken(resultSet.getString(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_TOKEN_COLUMN));
         return nextClient;
     }
 
