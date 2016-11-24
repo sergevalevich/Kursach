@@ -2,6 +2,7 @@ package com.valevich.kursach.storage;
 
 import com.valevich.kursach.model.response.catalog.CatalogItem;
 import com.valevich.kursach.model.response.catalog.ProductItem;
+import com.valevich.kursach.model.response.order.OrderItem;
 import com.valevich.kursach.model.response.user.ClientInfo;
 import com.valevich.kursach.util.ConstantsManager;
 
@@ -63,18 +64,17 @@ public class DbHelper {
             CatalogItem prevCategory = new CatalogItem();
             while (result.next()) {
                 int categoryId = result.getInt(ShopContract.CATEGORY_TABLE_NAME + "." + ShopContract.CATEGORY_ID_COLUMN);
-                ProductItem product = createProduct(result);
                 if (categoryId != prevCategory.getId()) {
                     CatalogItem nextCategory = new CatalogItem();
                     nextCategory.setId(categoryId);
                     nextCategory.setName(result.getString(ShopContract.CATEGORY_NAME_COLUMN));
                     if (result.getInt(ShopContract.PRODUCT_CATEGORY_ID_COLUMN) != 0)
-                        nextCategory.addProduct(product);
+                        nextCategory.addProduct(createProduct(result));
 
                     catalog.add(nextCategory);
                     prevCategory = nextCategory;
                 } else {
-                    prevCategory.addProduct(product);
+                    prevCategory.addProduct(createProduct(result));
                 }
             }
         }
@@ -137,8 +137,8 @@ public class DbHelper {
             statement.setString(4, address);
             statement.setString(5, email);
             statement.setString(6, password);
-            if(isAdmin) statement.setInt(7, clientId);
-            else statement.setString(7,clientToken);
+            if (isAdmin) statement.setInt(7, clientId);
+            else statement.setString(7, clientToken);
 
             return statement.executeUpdate() != 0;
 
@@ -156,61 +156,66 @@ public class DbHelper {
 
     public ClientInfo getClientInfo(String email, String password) throws SQLException {
         try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CLIENT)) {
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CLIENT_INFO)) {
 
             statement.setString(1, email);
             statement.setString(2, password);
 
             try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return createClient(resultSet);
-                } else {
-                    throw new SQLException(ConstantsManager.WRONG_CREDENTIALS);
+                ClientInfo client = null;
+                OrderItem prevOrder = new OrderItem();
+                while (resultSet.next()) {
+                    if(client == null) client = createClient(resultSet);
+                    int orderId = resultSet.getInt(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_ID_COLUMN);
+                    if (orderId != prevOrder.getId()) {
+                        OrderItem order = createOrder(resultSet);
+                        order.addProduct(createProduct(resultSet));
+                        prevOrder = order;
+                        client.addOrder(order);
+                    } else {
+                        prevOrder.addProduct(createProduct(resultSet));
+                    }
                 }
+                if (client == null) throw new SQLException(ConstantsManager.WRONG_CREDENTIALS);
+                return client;
             }
         }
     }
 
     public List<ClientInfo> getClients() throws SQLException {
+        List<ClientInfo> clients = new ArrayList<>();
         try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_ALL_CLIENTS_WITH_ORDERS);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CLIENTS_WITH_ORDERS);
              ResultSet resultSet = statement.executeQuery()) {
 
-            List<ClientInfo> clients = new ArrayList<>();
+            ClientInfo prevClient = new ClientInfo();
+            OrderItem prevOrder = new OrderItem();
             while (resultSet.next()) {
-                clients.add(createClient(resultSet));
+                int clientId = resultSet.getInt(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_ID_COLUMN);
+                int orderId = resultSet.getInt(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_ID_COLUMN);
+
+                if (clientId != prevClient.getId()) {
+                    ClientInfo nextClient = createClient(resultSet);
+                    if (resultSet.getInt(ShopContract.ORDER_CLIENT_ID_COLUMN) != 0) {
+                        OrderItem order = createOrder(resultSet);
+                        order.addProduct(createProduct(resultSet));
+                        nextClient.addOrder(order);
+                        prevOrder = order;
+                    }
+                    clients.add(nextClient);
+                    prevClient = nextClient;
+                } else if (orderId != prevOrder.getId()) {
+                    OrderItem order = createOrder(resultSet);
+                    order.addProduct(createProduct(resultSet));
+                    prevOrder = order;
+                    prevClient.addOrder(order);
+                } else {
+                    prevOrder.addProduct(createProduct(resultSet));
+                }
             }
             return clients;
         }
     }
-    /*
-        public List<CatalogItem> getCatalog() throws SQLException {
-        List<CatalogItem> catalog = new ArrayList<>();
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CATALOG);
-             ResultSet result = statement.executeQuery()) {
-
-            CatalogItem prevCategory = new CatalogItem();
-            while (result.next()) {
-                int categoryId = result.getInt(ShopContract.CATEGORY_TABLE_NAME + "." + ShopContract.CATEGORY_ID_COLUMN);
-                ProductItem product = createProduct(result);
-                if (categoryId != prevCategory.getId()) {
-                    CatalogItem nextCategory = new CatalogItem();
-                    nextCategory.setId(categoryId);
-                    nextCategory.setName(result.getString(ShopContract.CATEGORY_NAME_COLUMN));
-                    if (result.getInt(ShopContract.PRODUCT_CATEGORY_ID_COLUMN) != 0)
-                        nextCategory.addProduct(product);
-
-                    catalog.add(nextCategory);
-                    prevCategory = nextCategory;
-                } else {
-                    prevCategory.addProduct(product);
-                }
-            }
-        }
-        return catalog;
-    }
-     */
 
     public boolean isAccessAllowed(String token, int action) throws SQLException {
         try (Connection connection = getConnection();
@@ -253,10 +258,9 @@ public class DbHelper {
 
     private ProductItem createProduct(ResultSet result) throws SQLException {
         return new ProductItem(
-                result.getInt(1),
-                result.getInt(ShopContract.PRODUCT_STOCK_ID_COLUMN),
-                result.getInt(ShopContract.PRODUCT_PROVIDER_ID_COLUMN),
-                result.getString(ShopContract.PRODUCT_TITLE_COLUMN),
+                result.getInt(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.PRODUCT_ID_COLUMN),
+                result.getString(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.STOCK_ADDRESS_COLUMN),
+                result.getString(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.PRODUCT_TITLE_COLUMN),
                 result.getString(ShopContract.PRODUCT_FEATURES_COLUMN),
                 result.getInt(ShopContract.PRODUCT_SUPPLY_PERIOD_COLUMN),
                 result.getInt(ShopContract.PRODUCT_STOCK_AMOUNT_COLUMN),
@@ -264,23 +268,35 @@ public class DbHelper {
                 result.getString(ShopContract.PRODUCT_METRICS_COLUMN),
                 result.getString(ShopContract.PRODUCT_IMAGE_URL),
                 result.getDate(ShopContract.PRODUCT_FIRST_SUPPLY_DATE_COLUMN),
-                result.getString(ShopContract.PRODUCT_DESCRIPTION_COLUMN),
+                result.getString(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.PRODUCT_DESCRIPTION_COLUMN),
                 result.getString(ShopContract.PRODUCT_ARTICUL_COLUMN));
     }
 
     private ClientInfo createClient(ResultSet resultSet) throws SQLException {
-        return new ClientInfo(
-                resultSet.getInt(ShopContract.CLIENT_ID_COLUMN),
-                resultSet.getString(ShopContract.CLIENT_NAME_COLUMN),
-                resultSet.getString(ShopContract.CLIENT_SURNAME_COLUMN),
-                resultSet.getString(ShopContract.CLIENT_PHONE_COLUMN),
-                resultSet.getDouble(ShopContract.CLIENT_CARD_NUMBER),
-                resultSet.getInt(ShopContract.CLIENT_CARD_CVV),
-                resultSet.getString(ShopContract.CLIENT_CARD_OWNER),
-                resultSet.getDate(ShopContract.CLIENT_CARD_EXP_DATE),
-                resultSet.getString(ShopContract.CLIENT_ADDRESS_COLUMN),
-                resultSet.getString(ShopContract.CLIENT_EMAIL_COLUMN),
-                resultSet.getString(ShopContract.CLIENT_TOKEN_COLUMN)
-        );
+        ClientInfo nextClient = new ClientInfo();
+        nextClient.setId(resultSet.getInt(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_ID_COLUMN));
+        nextClient.setName(resultSet.getString(ShopContract.CLIENTS_TABLE_NAME + "." + ShopContract.CLIENT_NAME_COLUMN));
+        nextClient.setSurname(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_SURNAME_COLUMN));
+        nextClient.setPhoneNumber(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_PHONE_COLUMN));
+        nextClient.setAddress(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_ADDRESS_COLUMN));
+        nextClient.setEmail(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_EMAIL_COLUMN));
+        nextClient.setToken(ShopContract.CLIENTS_TABLE_NAME + "." + resultSet.getString(ShopContract.CLIENT_TOKEN_COLUMN));
+        return nextClient;
     }
+
+    private OrderItem createOrder(ResultSet resultSet) throws SQLException {
+        OrderItem order = new OrderItem();
+        order.setId(resultSet.getInt(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_ID_COLUMN));
+        order.setDate(resultSet.getDate(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_DATE_COLUMN));
+        order.setClientFullName(resultSet.getString(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_CLIENT_NAME_COLUMNN));
+        order.setClientPhone(resultSet.getString(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_PHONE_NUMBER_COLUMN));
+        order.setStatus(resultSet.getString(ShopContract.STATUS_TABLE_NAME + "." + ShopContract.STATUS_DESCRIPTION_COLUMN));
+        order.setEmployeeName(resultSet.getString(ShopContract.EMPLOYEES_TABLE_NAME + "." + ShopContract.EMPLOYEE_NAME_COLUMN));
+        order.setEmployeeSurname(resultSet.getString(ShopContract.EMPLOYEES_TABLE_NAME + "." + ShopContract.EMPLOYEE_SURNAME_COLUMN));
+        order.setEmployeePhone(resultSet.getString(ShopContract.EMPLOYEES_TABLE_NAME + "." + ShopContract.EMPLOYEE_PHONE_COLUMN));
+        order.setDeliveryAddress(resultSet.getString(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_ADDRESS_COLUMN));
+        order.setSum(resultSet.getDouble(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_SUM_COLUMN));
+        return order;
+    }
+
 }

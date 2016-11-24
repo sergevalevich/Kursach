@@ -1,17 +1,14 @@
 package com.valevich.kursach.model.response.catalog;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.sql.Date;
-
-@AllArgsConstructor(access = AccessLevel.PUBLIC)
+@AllArgsConstructor
 @Data
 public class ProductItem {
     private int id;
-    private int stockId;
-    private int providerId;
+    private String stockAddress;
     private String name;
     private String features;
     private int supplyPeriod;
