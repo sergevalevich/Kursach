@@ -4,14 +4,14 @@ import com.valevich.kursach.model.request.Validatable;
 import lombok.Data;
 
 @Data
-public class AddClientPayload extends ClientPayload implements Validatable {
+public class UpdatePersonalInfoPayload extends ClientPayload implements Validatable {
 
-    private String employeeToken;
+    private String token;
 
     @Override
     public boolean isValid() {
-        return employeeToken != null && !employeeToken.isEmpty()
+        return token != null && !token.isEmpty()
                 && getEmail() != null && !getEmail().isEmpty()
-                && getEmail() != null && !getPassword().isEmpty();
+                && getPassword() != null && !getPassword().isEmpty();
     }
 }

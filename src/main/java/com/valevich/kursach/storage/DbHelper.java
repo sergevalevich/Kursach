@@ -96,19 +96,19 @@ public class DbHelper {
     }
 
     public long insertClient(String name, String surname,
-                                  String phone, String address,
-                                  String email, String password) throws SQLException {
+                             String phone, String address,
+                             String email, String password) throws SQLException {
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_CLIENT_ADMIN,
                      Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, name);
-            statement.setString(2,surname);
+            statement.setString(2, surname);
             statement.setString(3, phone);
-            statement.setString(4,address);
+            statement.setString(4, address);
             statement.setString(5, email);
-            statement.setString(6,password);
-            statement.setString(7,UUID.randomUUID().toString());
+            statement.setString(6, password);
+            statement.setString(7, UUID.randomUUID().toString());
 
             int rows = statement.executeUpdate();
 
@@ -122,18 +122,23 @@ public class DbHelper {
     }
 
     public boolean updateClient(String name, String surname,
-                                     String phone, String address,
-                                     String email, String password,int id) throws SQLException {
+                                String phone, String address,
+                                String email, String password,
+                                int clientId, String clientToken) throws SQLException {
+        boolean isAdmin = clientToken == null;
         try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(ShopContract.UPDATE_CLIENT_ADMIN)) {
+             PreparedStatement statement = connection.prepareStatement(isAdmin
+                     ? ShopContract.UPDATE_CLIENT_ADMIN
+                     : ShopContract.UPDATE_CLIENT_CLIENT)) {
 
             statement.setString(1, name);
-            statement.setString(2,surname);
+            statement.setString(2, surname);
             statement.setString(3, phone);
-            statement.setString(4,address);
+            statement.setString(4, address);
             statement.setString(5, email);
-            statement.setString(6,password);
-            statement.setInt(7,id);
+            statement.setString(6, password);
+            if(isAdmin) statement.setInt(7, clientId);
+            else statement.setString(7,clientToken);
 
             return statement.executeUpdate() != 0;
 
@@ -144,12 +149,12 @@ public class DbHelper {
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(ShopContract.DELETE_CLIENT)) {
 
-            statement.setInt(1,id);
+            statement.setInt(1, id);
             return statement.executeUpdate() != 0;
         }
     }
 
-    public ClientInfo getClient(String email, String password) throws SQLException {
+    public ClientInfo getClientInfo(String email, String password) throws SQLException {
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CLIENT)) {
 
@@ -168,7 +173,7 @@ public class DbHelper {
 
     public List<ClientInfo> getClients() throws SQLException {
         try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_ALL_CLIENTS);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_ALL_CLIENTS_WITH_ORDERS);
              ResultSet resultSet = statement.executeQuery()) {
 
             List<ClientInfo> clients = new ArrayList<>();
@@ -178,6 +183,34 @@ public class DbHelper {
             return clients;
         }
     }
+    /*
+        public List<CatalogItem> getCatalog() throws SQLException {
+        List<CatalogItem> catalog = new ArrayList<>();
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CATALOG);
+             ResultSet result = statement.executeQuery()) {
+
+            CatalogItem prevCategory = new CatalogItem();
+            while (result.next()) {
+                int categoryId = result.getInt(ShopContract.CATEGORY_TABLE_NAME + "." + ShopContract.CATEGORY_ID_COLUMN);
+                ProductItem product = createProduct(result);
+                if (categoryId != prevCategory.getId()) {
+                    CatalogItem nextCategory = new CatalogItem();
+                    nextCategory.setId(categoryId);
+                    nextCategory.setName(result.getString(ShopContract.CATEGORY_NAME_COLUMN));
+                    if (result.getInt(ShopContract.PRODUCT_CATEGORY_ID_COLUMN) != 0)
+                        nextCategory.addProduct(product);
+
+                    catalog.add(nextCategory);
+                    prevCategory = nextCategory;
+                } else {
+                    prevCategory.addProduct(product);
+                }
+            }
+        }
+        return catalog;
+    }
+     */
 
     public boolean isAccessAllowed(String token, int action) throws SQLException {
         try (Connection connection = getConnection();

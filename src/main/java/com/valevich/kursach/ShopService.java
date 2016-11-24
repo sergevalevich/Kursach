@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.valevich.kursach.model.request.category.DeleteCategoryPayload;
 import com.valevich.kursach.model.request.category.NewCategoryPayload;
 import com.valevich.kursach.model.request.category.UpdateCategoryPayload;
-import com.valevich.kursach.model.request.client.AddClientPayload;
-import com.valevich.kursach.model.request.client.ClientPayload;
-import com.valevich.kursach.model.request.client.DeleteClientPayload;
-import com.valevich.kursach.model.request.client.UpdateClientPayload;
+import com.valevich.kursach.model.request.client.*;
 import com.valevich.kursach.model.response.DefaultResponse;
 import com.valevich.kursach.model.response.DefaultInsertResponse;
 import com.valevich.kursach.model.response.user.ClientRegistration;
@@ -120,7 +117,7 @@ public class ShopService {
         post("/client/register", (req, res) -> {
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                ClientPayload newClient = mapper.readValue(req.body(), ClientPayload.class);
+                ClientAuthPayload newClient = mapper.readValue(req.body(), ClientAuthPayload.class);
                 if (!newClient.isValid()) {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST_FRIENDLY));
@@ -141,14 +138,14 @@ public class ShopService {
         post("/client/login", (req, res) -> {
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                ClientPayload clientPayload = mapper.readValue(req.body(), ClientPayload.class);
+                ClientAuthPayload clientPayload = mapper.readValue(req.body(), ClientAuthPayload.class);
                 if (!clientPayload.isValid()) {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST_FRIENDLY));
                 }
                 res.status(200);
                 res.type("application/json");
-                return dataToJson(dbHelper.getClient(clientPayload.getEmail(),clientPayload.getPassword()));
+                return dataToJson(dbHelper.getClientInfo(clientPayload.getEmail(),clientPayload.getPassword()));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
                 res.status(HTTP_BAD_REQUEST);
                 String message = e.getMessage() != null && e.getMessage().equals(ConstantsManager.WRONG_CREDENTIALS)
@@ -228,7 +225,41 @@ public class ShopService {
                         clientToUpdate.getAddress(),
                         clientToUpdate.getEmail(),
                         clientToUpdate.getPassword(),
-                        clientToUpdate.getId());
+                        clientToUpdate.getId(),
+                        null);
+
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
+            } catch (JsonParseException | JsonMappingException | SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                String message = e.getMessage() != null && e.getMessage().contains("Duplicate")
+                        ? ConstantsManager.DUPLICATE_EMAIL
+                        : ConstantsManager.INVALID_REQUEST_FRIENDLY;
+                return dataToJson(new DefaultResponse(message));
+            }
+        });
+
+        post("/client/update_personal", (req, res) -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                UpdatePersonalInfoPayload clientInfoToUpdate = mapper.readValue(req.body(), UpdatePersonalInfoPayload.class);
+                if (!clientInfoToUpdate.isValid()) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                if (!dbHelper.isUserExist(clientInfoToUpdate.getToken())) {
+                    res.status(HTTP_FORBIDDEN);
+                    return dataToJson(new DefaultResponse(ConstantsManager.ACCESS_NOT_ALLOWED));
+                }
+                boolean hasUpdated = dbHelper.updateClient(clientInfoToUpdate.getName(),
+                        clientInfoToUpdate.getSurname(),
+                        clientInfoToUpdate.getPhoneNumber(),
+                        clientInfoToUpdate.getAddress(),
+                        clientInfoToUpdate.getEmail(),
+                        clientInfoToUpdate.getPassword(),
+                        0,
+                        clientInfoToUpdate.getToken());
 
                 res.status(200);
                 res.type("application/json");

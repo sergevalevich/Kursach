@@ -1,9 +1,12 @@
 package com.valevich.kursach.model.response.user;
 
+import com.valevich.kursach.model.response.order.OrderItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 @AllArgsConstructor
 @Data
@@ -19,4 +22,10 @@ public class ClientInfo {
     private String address;
     private String email;
     private String token;
+    private List<OrderItem> orders;
+
+    public void addOrder(OrderItem order) {
+        if(orders == null) orders = new ArrayList<>();
+        orders.add(order);
+    }
 }
