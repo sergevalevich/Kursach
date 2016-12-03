@@ -5,14 +5,5 @@ import lombok.Data;
 
 @Data
 public class UpdateCategoryPayload extends NewCategoryPayload implements Validatable {
-
     private int id;
-
-    @Override
-    public boolean isValid() {
-        return getToken() != null
-                && !getToken().isEmpty()
-                && getName() != null
-                && !getName().isEmpty();
-    }
 }

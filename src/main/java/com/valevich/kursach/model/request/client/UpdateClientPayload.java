@@ -5,13 +5,5 @@ import lombok.Data;
 
 @Data
 public class UpdateClientPayload extends AddClientPayload implements Validatable {
-
     private int id;
-
-    @Override
-    public boolean isValid() {
-        return getEmployeeToken() != null && !getEmployeeToken().isEmpty()
-                && getEmail() != null && !getEmail().isEmpty()
-                && getPassword() != null && !getPassword().isEmpty();
-    }
 }

@@ -6,12 +6,10 @@ import lombok.Data;
 @Data
 public class AddClientPayload extends ClientPayload implements Validatable {
 
-    private String employeeToken;
-
     @Override
     public boolean isValid() {
-        return employeeToken != null && !employeeToken.isEmpty()
-                && getEmail() != null && !getEmail().isEmpty()
-                && getEmail() != null && !getPassword().isEmpty();
+        return getEmail() != null && !getEmail().isEmpty()
+                && getEmail() != null && !getPassword().isEmpty()
+                && super.isValid();
     }
 }
