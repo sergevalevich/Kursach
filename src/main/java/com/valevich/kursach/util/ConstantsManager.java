@@ -8,6 +8,7 @@ public interface ConstantsManager {
     String OPERATION_SUCCESSFULL = "OPERATION PASSED ";
     String DUPLICATE_EMAIL = "Пользователь с таким почтовым адресом уже зарегистрирован";
     String WRONG_CREDENTIALS = "Неправильный Email или пароль";
+    String NO_PRODUCTS_LEFT = "Товара нет на складе";
 
     int DEFAULT_ORDER_STATUS = 3;
 

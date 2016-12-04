@@ -8,6 +8,7 @@ public class ShopContract {
     // category table
     static final String CATEGORY_TABLE_NAME = "category";
     static final String CATEGORY_NAME_COLUMN = "name";
+    static final String CATEGORY_IMAGE_COLUMN = "imageUrl";
     static final String CATEGORY_ID_COLUMN = "id";
     //client table
     static final String CLIENTS_TABLE_NAME = "client";
@@ -31,20 +32,17 @@ public class ShopContract {
     static final String EMPLOYEE_SURNAME_COLUMN = "surname";
     static final String EMPLOYEE_PHONE_COLUMN = "phone_number";
     static final String EMPLOYEE_AGE_COLUMN = "age";
+    static final String EMPLOYEE_POSITION_COLUMN = "position";
     static final String EMPLOYEE_EMAIL_COLUMN = "email";
-    static final String EMPLOYEE_PASS_COLUMN = "password";
-    static final String EMPLOYEE_PRIV_COLUMN = "priv";
     //product table
     static final String PRODUCT_TABLE_NAME = "product";
     static final String PRODUCT_TITLE_COLUMN = "title";
     static final String PRODUCT_ID_COLUMN = "id";
     static final String PRODUCT_FEATURES_COLUMN = "features";
-    static final String PRODUCT_SUPPLY_PERIOD_COLUMN = "supply_period";
     static final String PRODUCT_STOCK_AMOUNT_COLUMN = "stock_amount";
     static final String PRODUCT_PRICE_COLUMN = "price";
     static final String PRODUCT_METRICS_COLUMN = "metrics";
     static final String PRODUCT_IMAGE_URL = "imageUrl";
-    static final String PRODUCT_FIRST_SUPPLY_DATE_COLUMN = "first_supply_date";
     static final String PRODUCT_DESCRIPTION_COLUMN = "description";
     static final String PRODUCT_ARTICUL_COLUMN = "articul";
     static final String PRODUCT_CATEGORY_ID_COLUMN = "categoryId";
@@ -79,13 +77,14 @@ public class ShopContract {
 
     static final String ADD_CATEGORY = "INSERT INTO "
             + CATEGORY_TABLE_NAME
-            + " (" + CATEGORY_NAME_COLUMN + ")"
+            + " (" + CATEGORY_NAME_COLUMN + "," + CATEGORY_IMAGE_COLUMN + ")"
             + " VALUES"
-            + "(?)";
+            + "(?,?)";
 
     static final String UPDATE_CATEGORY = "UPDATE "
             + CATEGORY_TABLE_NAME
             + " SET " + CATEGORY_NAME_COLUMN + " = ?"
+            + "," + CATEGORY_IMAGE_COLUMN + " = ?"
             + " WHERE " + CATEGORY_ID_COLUMN + " = ?";
 
     static final String REMOVE_CATEGORY = "DELETE FROM "
@@ -249,6 +248,18 @@ public class ShopContract {
     static final String RESET_STOCK_AMOUNT = "call materik.reset_stock_amount(?,?)";
 
     static final String REMOVE_FROM_STOCK = "call materik.remove_from_stock(?,?)";
+
+    static final String ADD_PRODUCT = "call materik.add_product(?,?,?,?,?,?,?,?,?,?,"+ INSERTED_ID +")";
+
+    static final String REMOVE_PRODUCT = "call materik.remove_product(?)";
+
+    static final String GET_EMPLOYEES = "call materik.get_employees()";
+
+    static final String GET_EMPLOYEE_INFO = "call materik.get_employee_info(?)";
+
+    static final String BIND_EMPLOYEE = "call materik.bind_employee(?,?)";
+
+    static final String CHANGE_ORDER_STATUS = "call materik.set_order_status(?)";
 
 //    public interface RolesContract {
 //        int EDIT_CATALOG = 1;

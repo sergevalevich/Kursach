@@ -1,9 +1,9 @@
 package com.valevich.kursach.storage;
 
-import com.sun.deploy.util.ArrayUtil;
 import com.valevich.kursach.model.request.product.ProductInOrder;
 import com.valevich.kursach.model.response.catalog.CatalogItem;
 import com.valevich.kursach.model.response.catalog.ProductItem;
+import com.valevich.kursach.model.response.employee.EmployeeItem;
 import com.valevich.kursach.model.response.order.OrderItem;
 import com.valevich.kursach.model.response.status.StatusItem;
 import com.valevich.kursach.model.response.stock.StockItem;
@@ -20,12 +20,13 @@ public class DbHelper {
         initDriver();
     }
 
-    public long insertCategory(String name, String dbUser, String dbUserPass) throws SQLException {
+    public long insertCategory(String name, String imageUrl, String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
              PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_CATEGORY,
                      Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, name);
+            statement.setString(2, imageUrl);
             int rows = statement.executeUpdate();
 
             if (rows == 0) throw new SQLException(ConstantsManager.NO_ROWS_AFFECTED);
@@ -37,12 +38,13 @@ public class DbHelper {
         }
     }
 
-    public boolean updateCategory(int id, String name, String dbUser, String dbUserPass) throws SQLException {
+    public boolean updateCategory(int id, String name, String imageUrl, String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
              PreparedStatement statement = connection.prepareStatement(ShopContract.UPDATE_CATEGORY)) {
 
             statement.setString(1, name);
-            statement.setInt(2, id);
+            statement.setString(2, imageUrl);
+            statement.setInt(3, id);
             return statement.executeUpdate() != 0;
         }
     }
@@ -69,6 +71,7 @@ public class DbHelper {
                     CatalogItem nextCategory = new CatalogItem();
                     nextCategory.setId(categoryId);
                     nextCategory.setName(result.getString(ShopContract.CATEGORY_NAME_COLUMN));
+                    nextCategory.setImageUrl(result.getString(ShopContract.CATEGORY_IMAGE_COLUMN));
                     if (result.getInt(ShopContract.PRODUCT_CATEGORY_ID_COLUMN) != 0)
                         nextCategory.addProduct(createProduct(result));
 
@@ -366,7 +369,8 @@ public class DbHelper {
         try (Connection connection = getConnection(ConstantsManager.ROOT_USER, ConstantsManager.ROOT_PASS)) {
             connection.setAutoCommit(false);
             try (PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_ORDER);
-                 PreparedStatement removeFromStockStatement = connection.prepareStatement(ShopContract.REMOVE_FROM_STOCK)) {
+                 PreparedStatement removeFromStockStatement = connection.prepareStatement(ShopContract.REMOVE_FROM_STOCK);
+                 PreparedStatement bindProductStatement = connection.prepareStatement(ShopContract.BIND_PRODUCT)) {
                 statement.setDate(1, date);
                 statement.setString(2, fullName);
                 statement.setString(3, phone);
@@ -380,17 +384,16 @@ public class DbHelper {
                 try (ResultSet resultSet = statement.executeQuery(ShopContract.GET_INSERTED_ID)) {
                     if (resultSet.next()) {
                         int orderId = resultSet.getInt(1);
-
                         for (ProductInOrder product : products) {
-                            statement.setInt(1, orderId);
-                            statement.setInt(2, product.getId());
-                            statement.setInt(3, product.getAmount());
-                            statement.addBatch(ShopContract.BIND_PRODUCT);
+                            bindProductStatement.setInt(1, orderId);
+                            bindProductStatement.setInt(2, product.getId());
+                            bindProductStatement.setInt(3, product.getAmount());
+                            bindProductStatement.addBatch();
                             removeFromStockStatement.setInt(1, product.getAmount());
                             removeFromStockStatement.setInt(2, product.getId());
                             removeFromStockStatement.addBatch();
                         }
-                        checkUpdates(statement.executeBatch());
+                        checkUpdates(bindProductStatement.executeBatch());
                         checkUpdates(removeFromStockStatement.executeBatch());
                     } else throw new SQLException(ConstantsManager.NO_ID_OBTAINED);
                 }
@@ -406,9 +409,12 @@ public class DbHelper {
     }
 
     public boolean removeOrder(int id, String dbUser, String dbUserPass) throws SQLException {
+        boolean hasDeleted;
         try (Connection connection = getConnection(dbUser, dbUserPass)) {
             connection.setAutoCommit(false);
-            try (PreparedStatement statement = connection.prepareStatement(ShopContract.GET_ORDER_PRODUCTS)) {
+            try (PreparedStatement statement = connection.prepareStatement(ShopContract.GET_ORDER_PRODUCTS);
+                 PreparedStatement resetStockAmountStatement = connection.prepareStatement(ShopContract.RESET_STOCK_AMOUNT);
+                 PreparedStatement removeOrderStatement = connection.prepareStatement(ShopContract.REMOVE_ORDER)) {
                 statement.setInt(1, id);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     Map<Integer, Integer> products = new HashMap<>();
@@ -418,13 +424,13 @@ public class DbHelper {
                                 resultSet.getInt(ShopContract.ORDER_PRODUCT_AMOUNT_COLUMN));
                     }
                     for (Map.Entry<Integer, Integer> product : products.entrySet()) {
-                        statement.setInt(1, product.getValue());
-                        statement.setInt(2, product.getKey());
-                        statement.addBatch(ShopContract.RESET_STOCK_AMOUNT);
+                        resetStockAmountStatement.setInt(1, product.getValue());
+                        resetStockAmountStatement.setInt(2, product.getKey());
+                        resetStockAmountStatement.addBatch();
                     }
-                    checkUpdates(statement.executeBatch());
-                    statement.setInt(1, id);
-                    statement.execute(ShopContract.REMOVE_ORDER);
+                    checkUpdates(resetStockAmountStatement.executeBatch());
+                    removeOrderStatement.setInt(1, id);
+                    hasDeleted = removeOrderStatement.executeUpdate() != 0;
                 }
             } catch (SQLException ex) {
                 connection.rollback();
@@ -433,19 +439,103 @@ public class DbHelper {
             }
             connection.commit();
             connection.setAutoCommit(true);
-            return true;
+            return hasDeleted;
         }
     }
 
-    public boolean unbindProduct(int productId, int orderId, String dbUser, String dbUserPass) throws SQLException {
+    public int insertProduct(String title, String features,
+                             int amount, double price,
+                             String metrics, String imageUrl,
+                             String description, String articul,
+                             int categoryId, int stockId,
+                             String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
-             PreparedStatement statement = connection.prepareStatement(ShopContract.UNBIND_PRODUCT)) {
+             PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_PRODUCT)) {
 
-            statement.setInt(1, orderId);
-            statement.setInt(2, productId);
+            statement.setString(1, title);
+            statement.setString(2, features);
+            statement.setInt(3, amount);
+            statement.setDouble(4, price);
+            statement.setString(5, metrics);
+            statement.setString(6, imageUrl);
+            statement.setString(7, description);
+            statement.setString(8, articul);
+            statement.setInt(9, categoryId);
+            statement.setInt(10, stockId);
+            int rows = statement.executeUpdate();
+            if (rows == 0) throw new SQLException(ConstantsManager.NO_ROWS_AFFECTED);
+
+            try (ResultSet resultSet = statement.executeQuery(ShopContract.GET_INSERTED_ID)) {
+                if (resultSet.next()) return resultSet.getInt(1);
+                else throw new SQLException(ConstantsManager.NO_ID_OBTAINED);
+            }
+        }
+    }
+
+    public boolean removeProduct(int id, String dbUser, String dbUserPass) throws SQLException {
+        try (Connection connection = getConnection(dbUser, dbUserPass);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.REMOVE_PRODUCT)) {
+
+            statement.setInt(1, id);
             return statement.executeUpdate() != 0;
         }
     }
+
+    public List<EmployeeItem> getEmployees(String dbUser, String dbPass) throws SQLException {
+        List<EmployeeItem> employees = new ArrayList<>();
+        try (Connection connection = getConnection(dbUser, dbPass);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_EMPLOYEES);
+             ResultSet result = statement.executeQuery()) {
+
+            EmployeeItem prevEmployee = new EmployeeItem();
+            while (result.next()) {
+                int employeeId = result.getInt(ShopContract.EMPLOYEES_TABLE_NAME + "." + ShopContract.EMPLOYEE_ID_COLUMN);
+                if (employeeId != prevEmployee.getId()) {
+                    EmployeeItem nextEmployee = createEmployee(result);
+                    if (result.getInt(ShopContract.ORDER_EMPLOYEE_ID_COLUMN) != 0)
+                        nextEmployee.addOrder(createOrder(result));
+
+                    employees.add(nextEmployee);
+                    prevEmployee = nextEmployee;
+                } else {
+                    prevEmployee.addOrder(createOrder(result));
+                }
+            }
+        }
+        return employees;
+    }
+
+    public EmployeeItem getEmployeeInfo(String email, String password) throws SQLException {
+        try (Connection connection = getConnection(email, password);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_EMPLOYEE_INFO)) {
+            statement.setString(1, email);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return createEmployee(resultSet);
+                } else throw new SQLException(ConstantsManager.WRONG_CREDENTIALS);
+            }
+        }
+    }
+
+    public boolean bindEmployee(int employeeId, int newOrderStatusId,String dbUser,String dbUserPass) throws SQLException {
+        try (Connection connection = getConnection(dbUser, dbUserPass);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.BIND_EMPLOYEE)) {
+
+            statement.setInt(1, employeeId);
+            statement.setInt(2, newOrderStatusId);
+            return statement.executeUpdate() != 0;
+        }
+    }
+
+    public boolean setOrderStatus(int newOrderStatusId,String dbUser,String dbUserPass) throws SQLException {
+        try (Connection connection = getConnection(dbUser, dbUserPass);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.CHANGE_ORDER_STATUS)) {
+            statement.setInt(1, newOrderStatusId);
+            return statement.executeUpdate() != 0;
+        }
+    }
+
+
     /*
         private Date date;
     private String clientFullName;
@@ -500,12 +590,10 @@ public class DbHelper {
                 result.getString(ShopContract.STOCK_TABLE_NAME + "." + ShopContract.STOCK_ADDRESS_COLUMN),
                 result.getString(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.PRODUCT_TITLE_COLUMN),
                 result.getString(ShopContract.PRODUCT_FEATURES_COLUMN),
-                result.getInt(ShopContract.PRODUCT_SUPPLY_PERIOD_COLUMN),
                 result.getInt(ShopContract.PRODUCT_STOCK_AMOUNT_COLUMN),
                 result.getDouble(ShopContract.PRODUCT_PRICE_COLUMN),
                 result.getString(ShopContract.PRODUCT_METRICS_COLUMN),
                 result.getString(ShopContract.PRODUCT_IMAGE_URL),
-                result.getDate(ShopContract.PRODUCT_FIRST_SUPPLY_DATE_COLUMN),
                 result.getString(ShopContract.PRODUCT_TABLE_NAME + "." + ShopContract.PRODUCT_DESCRIPTION_COLUMN),
                 result.getString(ShopContract.PRODUCT_ARTICUL_COLUMN));
     }
@@ -535,6 +623,19 @@ public class DbHelper {
         order.setDeliveryAddress(resultSet.getString(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_ADDRESS_COLUMN));
         order.setSum(resultSet.getDouble(ShopContract.ORDER_TABLE_NAME + "." + ShopContract.ORDER_SUM_COLUMN));
         return order;
+    }
+
+    private EmployeeItem createEmployee(ResultSet resultSet) throws SQLException {
+        EmployeeItem employee = new EmployeeItem();
+        employee.setId(resultSet.getInt(ShopContract.EMPLOYEES_TABLE_NAME + "." + ShopContract.EMPLOYEE_ID_COLUMN));
+        employee.setAge(resultSet.getInt(ShopContract.EMPLOYEE_AGE_COLUMN));
+        employee.setName(resultSet.getString(ShopContract.EMPLOYEES_TABLE_NAME + "." + ShopContract.EMPLOYEE_NAME_COLUMN));
+        employee.setPhoneNumber(resultSet.getString(ShopContract.EMPLOYEE_PHONE_COLUMN));
+        employee.setPosition(resultSet.getString(ShopContract.EMPLOYEE_POSITION_COLUMN));
+        employee.setSurname(resultSet.getString(ShopContract.EMPLOYEE_SURNAME_COLUMN));
+        employee.setToken(resultSet.getString(ShopContract.EMPLOYEE_TOKEN_COLUMN));
+        employee.setEmail(resultSet.getString(ShopContract.EMPLOYEE_EMAIL_COLUMN));
+        return employee;
     }
 
     private void checkUpdates(int[] updates) throws SQLException {

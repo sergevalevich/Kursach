@@ -4,7 +4,6 @@ import com.valevich.kursach.model.request.AccessPayload;
 import lombok.Data;
 
 @Data
-public class UnbindProductPayload extends AccessPayload {
-    private int orderId;
-    private int productId;
+public class DeleteProductPayload extends AccessPayload{
+    private int id;
 }

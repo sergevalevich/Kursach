@@ -9,6 +9,7 @@ import java.util.List;
 public class CatalogItem {
     private int id;
     private String name;
+    private String imageUrl;
     private List<ProductItem> products;
 
     public void addProduct(ProductItem product) {

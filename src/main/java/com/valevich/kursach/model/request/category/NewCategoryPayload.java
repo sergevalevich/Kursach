@@ -9,6 +9,7 @@ import lombok.Data;
 public class NewCategoryPayload extends AccessPayload implements Validatable {
 
     private String name;
+    private String imageUrl;
 
     @Override
     public boolean isValid() {

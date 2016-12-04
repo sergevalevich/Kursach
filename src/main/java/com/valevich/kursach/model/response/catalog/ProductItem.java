@@ -11,12 +11,10 @@ public class ProductItem {
     private String stockAddress;
     private String name;
     private String features;
-    private int supplyPeriod;
     private int stockAmount;
     private double price;
     private String metrics;
     private String imageUrl;
-    private Date firstSupplyDate;
     private String description;
     private String articul;
 }

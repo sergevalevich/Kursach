@@ -4,13 +4,17 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.valevich.kursach.model.request.AccessPayload;
 import com.valevich.kursach.model.request.category.DeleteCategoryPayload;
 import com.valevich.kursach.model.request.category.NewCategoryPayload;
 import com.valevich.kursach.model.request.category.UpdateCategoryPayload;
 import com.valevich.kursach.model.request.client.*;
+import com.valevich.kursach.model.request.order.BindEmployeePayload;
 import com.valevich.kursach.model.request.order.DeleteOrderPayload;
 import com.valevich.kursach.model.request.order.NewOrderPayload;
-import com.valevich.kursach.model.request.product.UnbindProductPayload;
+import com.valevich.kursach.model.request.order.SetOrderStatusPayload;
+import com.valevich.kursach.model.request.product.DeleteProductPayload;
+import com.valevich.kursach.model.request.product.NewProductPayload;
 import com.valevich.kursach.model.request.status.DeleteStatusPayload;
 import com.valevich.kursach.model.request.status.NewStatusPayload;
 import com.valevich.kursach.model.request.status.UpdateStatusPayload;
@@ -47,6 +51,7 @@ public class ShopService {
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 long id = dbHelper.insertCategory(newCategory.getName(),
+                        newCategory.getImageUrl(),
                         newCategory.getUserEmail(),
                         newCategory.getUserPassword());
                 res.status(200);
@@ -86,6 +91,7 @@ public class ShopService {
                 }
                 boolean hasUpdated = dbHelper.updateCategory(categoryToUpdate.getId(),
                         categoryToUpdate.getName(),
+                        categoryToUpdate.getImageUrl(),
                         categoryToUpdate.getUserEmail(),
                         categoryToUpdate.getUserPassword());
                 res.status(200);
@@ -126,7 +132,7 @@ public class ShopService {
                 }
                 res.status(200);
                 res.type("application/json");
-                return dataToJson(dbHelper.getStocks(email,pass));
+                return dataToJson(dbHelper.getStocks(email, pass));
             } catch (SQLException e) {
                 res.status(HTTP_BAD_REQUEST);
                 return dataToJson(new DefaultResponse(getMessage(e)));
@@ -200,7 +206,7 @@ public class ShopService {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
-                String token = dbHelper.insertClient(newClient.getEmail(),newClient.getPassword());
+                String token = dbHelper.insertClient(newClient.getEmail(), newClient.getPassword());
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(new ClientRegistration(token));
@@ -220,7 +226,7 @@ public class ShopService {
                 }
                 res.status(200);
                 res.type("application/json");
-                return dataToJson(dbHelper.getClientInfo(clientPayload.getEmail(),clientPayload.getPassword()));
+                return dataToJson(dbHelper.getClientInfo(clientPayload.getEmail(), clientPayload.getPassword()));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
                 res.status(HTTP_BAD_REQUEST);
                 return dataToJson(new DefaultResponse(getMessage(e)));
@@ -237,7 +243,7 @@ public class ShopService {
                 }
                 res.status(200);
                 res.type("application/json");
-                return dataToJson(dbHelper.getClients(email,pass));
+                return dataToJson(dbHelper.getClients(email, pass));
             } catch (SQLException e) {
                 res.status(HTTP_BAD_REQUEST);
                 return dataToJson(new DefaultResponse(getMessage(e)));
@@ -364,7 +370,7 @@ public class ShopService {
                 }
                 res.status(200);
                 res.type("application/json");
-                return dataToJson(dbHelper.getOrders(email,pass));
+                return dataToJson(dbHelper.getOrders(email, pass));
             } catch (SQLException e) {
                 res.status(HTTP_BAD_REQUEST);
                 return dataToJson(getMessage(e));
@@ -478,18 +484,123 @@ public class ShopService {
             }
         });
 
-        post("/product/unbind", (req, res) -> {
+        post("/product/add", (req, res) -> {
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                UnbindProductPayload productToUnbind = mapper.readValue(req.body(), UnbindProductPayload.class);
-                if (!productToUnbind.isValid()) {
+                NewProductPayload newProduct = mapper.readValue(req.body(), NewProductPayload.class);
+                if (!newProduct.isValid()) {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
-                boolean hasUpdated = dbHelper.unbindProduct(productToUnbind.getProductId(),
-                        productToUnbind.getOrderId(),
-                        productToUnbind.getUserEmail(),
-                        productToUnbind.getUserPassword());
+
+                long id = dbHelper.insertProduct(newProduct.getTitle(),
+                        newProduct.getFeatures(),
+                        newProduct.getAmount(),
+                        newProduct.getPrice(),
+                        newProduct.getMetrics(),
+                        newProduct.getImageUrl(),
+                        newProduct.getDescription(),
+                        newProduct.getArticul(),
+                        newProduct.getCategoryId(),
+                        newProduct.getStockId(),
+                        newProduct.getUserEmail(),
+                        newProduct.getUserPassword());
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(new DefaultInsertResponse(id));
+            } catch (JsonParseException | JsonMappingException | SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                return dataToJson(new DefaultResponse(getMessage(e)));
+            }
+        });
+
+        post("/product/remove", (req, res) -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                DeleteProductPayload productToRemove = mapper.readValue(req.body(), DeleteProductPayload.class);
+                if (!productToRemove.isValid()) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                boolean hasDeleted = dbHelper.removeProduct(productToRemove.getId(),
+                        productToRemove.getUserEmail(),
+                        productToRemove.getUserPassword());
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
+            } catch (JsonParseException | JsonMappingException | SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                return dataToJson(new DefaultResponse(getMessage(e)));
+            }
+        });
+
+        get("/employees/get", (req, res) -> {
+            try {
+                String email = req.headers("email");
+                String pass = req.headers("password");
+                if (email == null || pass == null) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(dbHelper.getEmployees(email, pass));
+            } catch (SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                return dataToJson(new DefaultResponse(getMessage(e)));
+            }
+        });
+
+        post("/employee/login", (req, res) -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                AccessPayload authPayload = mapper.readValue(req.body(), AccessPayload.class);
+                if (!authPayload.isValid()) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(dbHelper.getEmployeeInfo(authPayload.getUserEmail(), authPayload.getUserPassword()));
+            } catch (JsonParseException | JsonMappingException | SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                return dataToJson(new DefaultResponse(getMessage(e)));
+            }
+        });
+
+        post("/order/set/employee", (req, res) -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                BindEmployeePayload payload = mapper.readValue(req.body(), BindEmployeePayload.class);
+                if (!payload.isValid()) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                boolean hasUpdated = dbHelper.bindEmployee(payload.getEmployeeId(),
+                        payload.getOrderStatusId(),
+                        payload.getUserEmail(),
+                        payload.getUserPassword());
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
+            } catch (JsonParseException | JsonMappingException | SQLException e) {
+                res.status(HTTP_BAD_REQUEST);
+                return dataToJson(new DefaultResponse(getMessage(e)));
+            }
+        });
+
+        post("/order/set/status", (req, res) -> {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                SetOrderStatusPayload payload = mapper.readValue(req.body(), SetOrderStatusPayload.class);
+                if (!payload.isValid()) {
+                    res.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                boolean hasUpdated = dbHelper.setOrderStatus(
+                        payload.getOrderStatusId(),
+                        payload.getUserEmail(),
+                        payload.getUserPassword());
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
@@ -502,12 +613,12 @@ public class ShopService {
 
     private static String getMessage(Exception e) {
         String message = e.getMessage();
-//        if(message == null) return ConstantsManager.INVALID_REQUEST;
-//        if(message.contains("Duplicate")) return ConstantsManager.DUPLICATE_EMAIL;
-//        if(message.contains("denied")) return ConstantsManager.ACCESS_NOT_ALLOWED;
-//        if(message.equals(ConstantsManager.WRONG_CREDENTIALS)) return message;
-//        return ConstantsManager.INVALID_REQUEST;
-        return message;
+        if (message == null) return ConstantsManager.INVALID_REQUEST;
+        if (message.contains("Duplicate")) return ConstantsManager.DUPLICATE_EMAIL;
+        if (message.contains("denied")) return ConstantsManager.ACCESS_NOT_ALLOWED;
+        if (message.contains("Out of range")) return ConstantsManager.NO_PRODUCTS_LEFT;
+        if (message.equals(ConstantsManager.WRONG_CREDENTIALS)) return message;
+        return ConstantsManager.INVALID_REQUEST;
     }
 
     /*
