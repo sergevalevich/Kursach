@@ -1,9 +1,6 @@
 package com.valevich.kursach.storage;
 
-public class ShopContract {
-
-    private static String INSERTED_ID = "@inserted_id";
-    static final String GET_INSERTED_ID = "select" + INSERTED_ID;
+class ShopContract {
 
     // category table
     static final String CATEGORY_TABLE_NAME = "category";
@@ -15,18 +12,13 @@ public class ShopContract {
     static final String CLIENT_ID_COLUMN = "id";
     static final String CLIENT_TOKEN_COLUMN = "token";
     static final String CLIENT_EMAIL_COLUMN = "email";
-    static final String CLIENT_PASSWORD_COLUMN = "password";
+    private static final String CLIENT_PASSWORD_COLUMN = "password";
     static final String CLIENT_ADDRESS_COLUMN = "address";
     static final String CLIENT_PHONE_COLUMN = "phone_number";
     static final String CLIENT_NAME_COLUMN = "name";
     static final String CLIENT_SURNAME_COLUMN = "surname";
-    static final String CLIENT_CARD_NUMBER = "card_number";
-    static final String CLIENT_CARD_CVV = "card_cvv";
-    static final String CLIENT_CARD_OWNER = "card_owner";
-    static final String CLIENT_CARD_EXP_DATE = "card_exp_date";
     //employee table
     static final String EMPLOYEES_TABLE_NAME = "employee";
-    static final String EMPLOYEE_TOKEN_COLUMN = "token";
     static final String EMPLOYEE_ID_COLUMN = "id";
     static final String EMPLOYEE_NAME_COLUMN = "name";
     static final String EMPLOYEE_SURNAME_COLUMN = "surname";
@@ -59,8 +51,8 @@ public class ShopContract {
     static final String ORDER_CLIENT_NAME_COLUMN = "client_name";
     static final String ORDER_SUM_COLUMN = "sum";
     //orderproduct table
-    static final String ORDER_PRODUCT_TABLE_NAME = "orderproduct";
-    static final String ORDER_PRODUCT_ORDER_ID_COLUMN = "orderId";
+    private static final String ORDER_PRODUCT_TABLE_NAME = "orderproduct";
+    private static final String ORDER_PRODUCT_ORDER_ID_COLUMN = "orderId";
     static final String ORDER_PRODUCT_PRODUCT_ID_COLUMN = "productId";
     static final String ORDER_PRODUCT_AMOUNT_COLUMN = "amount";
     //orderstatus table
@@ -71,8 +63,6 @@ public class ShopContract {
     static final String STOCK_TABLE_NAME = "stock";
     static final String STOCK_ID_COLUMN = "id";
     static final String STOCK_ADDRESS_COLUMN = "address";
-    //privilege table
-    private static final String PRIVILEGE_TABLE_NAME = "privilege";
 
 
     static final String ADD_CATEGORY = "INSERT INTO "
@@ -100,19 +90,9 @@ public class ShopContract {
             + " = " + CATEGORY_TABLE_NAME + "." + CATEGORY_ID_COLUMN
             + " ORDER BY " + PRODUCT_CATEGORY_ID_COLUMN;
 
-//    static final String IS_ACCESS_ALLOWED = "SELECT " + EMPLOYEE_PRIV_COLUMN + " & ? FROM "
-//            + EMPLOYEES_TABLE_NAME
-//            + " WHERE token = ?";
-
     static final String GET_ALL_TOKENS = "SELECT " + CLIENT_TOKEN_COLUMN
             + " FROM " + CLIENTS_TABLE_NAME
-            + " WHERE " + CLIENT_TOKEN_COLUMN + " = ?"
-            + " UNION"
-            + " SELECT " + EMPLOYEE_TOKEN_COLUMN
-            + " FROM " + EMPLOYEES_TABLE_NAME
-            + " WHERE " + EMPLOYEE_TOKEN_COLUMN + " = ?";
-
-//    static final String GRANT_PROCEDURE = "GRANT EXECUTE ON PROCEDURE =? TO 'lalala@mail.ru';";
+            + " WHERE " + CLIENT_TOKEN_COLUMN + " = ?";
 
     static final String ADD_CLIENT = "INSERT INTO "
             + CLIENTS_TABLE_NAME
@@ -130,7 +110,7 @@ public class ShopContract {
             + "," + CLIENT_ADDRESS_COLUMN
             + "," + CLIENT_EMAIL_COLUMN
             + "," + CLIENT_PASSWORD_COLUMN
-            +  "," + CLIENT_TOKEN_COLUMN + ")"
+            + "," + CLIENT_TOKEN_COLUMN + ")"
             + " VALUES"
             + "(?,?,?,?,?,?,?)";
 
@@ -142,7 +122,7 @@ public class ShopContract {
             + "," + CLIENT_ADDRESS_COLUMN + " =?"
             + "," + CLIENT_EMAIL_COLUMN + " =?"
             + "," + CLIENT_PASSWORD_COLUMN + " =?"
-            +  " WHERE " + CLIENT_ID_COLUMN + " =?";
+            + " WHERE " + CLIENT_ID_COLUMN + " =?";
 
     static final String UPDATE_CLIENT_CLIENT = "UPDATE "
             + CLIENTS_TABLE_NAME
@@ -152,7 +132,7 @@ public class ShopContract {
             + "," + CLIENT_ADDRESS_COLUMN + " =?"
             + "," + CLIENT_EMAIL_COLUMN + " =?"
             + "," + CLIENT_PASSWORD_COLUMN + " =?"
-            +  " WHERE " + CLIENT_TOKEN_COLUMN + " =?";
+            + " WHERE " + CLIENT_TOKEN_COLUMN + " =?";
 
     static final String DELETE_CLIENT = "DELETE FROM " + CLIENTS_TABLE_NAME
             + " WHERE " + CLIENT_ID_COLUMN + " =?";
@@ -178,31 +158,55 @@ public class ShopContract {
             + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN;
 
 
-    static final String GET_CLIENT_INFO =
-            "call materik.client_info(?, ?)";
-//            "SELECT * FROM " + PRODUCT_TABLE_NAME
-//            + " INNER JOIN " + STOCK_TABLE_NAME
-//            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_STOCK_ID_COLUMN
-//            + " = " + STOCK_TABLE_NAME + "." + STOCK_ID_COLUMN
-//            + " INNER JOIN " + ORDER_PRODUCT_TABLE_NAME
-//            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_ID_COLUMN
-//            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_PRODUCT_ID_COLUMN
-//            + " INNER JOIN " + ORDER_TABLE_NAME
-//            + " ON " + ORDER_TABLE_NAME + "." + ORDER_ID_COLUMN
-//            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_ORDER_ID_COLUMN
-//            + " INNER JOIN " + STATUS_TABLE_NAME
-//            + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
-//            + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
-//            + " LEFT JOIN " + EMPLOYEES_TABLE_NAME
-//            + " ON " + ORDER_TABLE_NAME + "." + ORDER_EMPLOYEE_ID_COLUMN
-//            + " = " + EMPLOYEES_TABLE_NAME + "." + EMPLOYEE_ID_COLUMN
-//            + " INNER JOIN " + CLIENTS_TABLE_NAME
-//            + " ON " + CLIENTS_TABLE_NAME + "." + CLIENT_ID_COLUMN
-//            + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN
-//            + " WHERE "
-//            + CLIENTS_TABLE_NAME + "." + CLIENT_EMAIL_COLUMN
-//            + " = ? AND "
-//            + CLIENTS_TABLE_NAME + "." + CLIENT_PASSWORD_COLUMN + " = ?";
+    static final String GET_CLIENT_INFO = "SELECT * FROM " + ORDER_TABLE_NAME
+            + " INNER JOIN " + STATUS_TABLE_NAME
+            + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
+            + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
+            + " LEFT JOIN " + EMPLOYEES_TABLE_NAME
+            + " ON " + ORDER_TABLE_NAME + "." + ORDER_EMPLOYEE_ID_COLUMN
+            + " = " + EMPLOYEES_TABLE_NAME + "." + EMPLOYEE_ID_COLUMN
+            + " INNER JOIN " + ORDER_PRODUCT_TABLE_NAME
+            + " ON " + ORDER_TABLE_NAME + "." + ORDER_ID_COLUMN
+            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_ORDER_ID_COLUMN
+            + " INNER JOIN " + PRODUCT_TABLE_NAME
+            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_ID_COLUMN
+            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_PRODUCT_ID_COLUMN
+            + " INNER JOIN " + STOCK_TABLE_NAME
+            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_STOCK_ID_COLUMN
+            + " = " + STOCK_TABLE_NAME + "." + STOCK_ID_COLUMN
+            + " RIGHT JOIN " + CLIENTS_TABLE_NAME
+            + " ON " + CLIENTS_TABLE_NAME + "." + CLIENT_ID_COLUMN
+            + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN
+            + " WHERE "
+            + CLIENTS_TABLE_NAME + "." + CLIENT_EMAIL_COLUMN
+            + " = ? AND "
+            + CLIENTS_TABLE_NAME + "." + CLIENT_PASSWORD_COLUMN + " = ?";
+
+    /*
+        static final String GET_CLIENT_INFO = "SELECT * FROM " + CLIENTS_TABLE_NAME
+            + " LEFT JOIN " + ORDER_TABLE_NAME
+            + " ON " + CLIENTS_TABLE_NAME + "." + CLIENT_ID_COLUMN
+            + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN
+            + " INNER JOIN " + STATUS_TABLE_NAME
+            + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
+            + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
+            + " LEFT JOIN " + EMPLOYEES_TABLE_NAME
+            + " ON " + ORDER_TABLE_NAME + "." + ORDER_EMPLOYEE_ID_COLUMN
+            + " = " + EMPLOYEES_TABLE_NAME + "." + EMPLOYEE_ID_COLUMN
+            + " INNER JOIN " + ORDER_PRODUCT_TABLE_NAME
+            + " ON " + ORDER_TABLE_NAME + "." + ORDER_ID_COLUMN
+            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_ORDER_ID_COLUMN
+            + " INNER JOIN " + PRODUCT_TABLE_NAME
+            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_ID_COLUMN
+            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_PRODUCT_ID_COLUMN
+            + " INNER JOIN " + STOCK_TABLE_NAME
+            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_STOCK_ID_COLUMN
+            + " = " + STOCK_TABLE_NAME + "." + STOCK_ID_COLUMN
+            + " WHERE "
+            + CLIENTS_TABLE_NAME + "." + CLIENT_EMAIL_COLUMN
+            + " = ? AND "
+            + CLIENTS_TABLE_NAME + "." + CLIENT_PASSWORD_COLUMN + " = ?";
+     */
 
     static final String GET_ORDERS = "SELECT * FROM " + PRODUCT_TABLE_NAME
             + " INNER JOIN " + STOCK_TABLE_NAME
@@ -221,52 +225,105 @@ public class ShopContract {
             + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
             + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN;
 
-    static final String ADD_STATUS = "call materik.add_status(?," + INSERTED_ID + ")";
+    static final String ADD_STATUS = "insert into " + STATUS_TABLE_NAME
+            + " (" + STATUS_DESCRIPTION_COLUMN + ")"
+            + " values (?)";
 
-    static final String UPDATE_STATUS = "call materik.update_status(?,?)";
+    static final String UPDATE_STATUS = "update " + STATUS_TABLE_NAME
+            + " set " + STATUS_DESCRIPTION_COLUMN + " = ? "
+            + " where " + STATUS_ID_COLUMN + " = ?";
 
-    static final String REMOVE_STATUS = "call materik.remove_status(?)";
+    static final String REMOVE_STATUS = "delete from " + STATUS_TABLE_NAME
+            + " where " + STATUS_ID_COLUMN + " = ?";
 
-    static final String GET_STOCKS = "call materik.get_stocks()";
+    static final String GET_STOCKS = "select * from " + STOCK_TABLE_NAME
+            + " left join " + PRODUCT_TABLE_NAME
+            + " on " + PRODUCT_TABLE_NAME + "." + PRODUCT_STOCK_ID_COLUMN
+            + " = " + STOCK_TABLE_NAME + "." + STOCK_ID_COLUMN;
 
-    static final String ADD_STOCK = "call materik.add_stock(?," + INSERTED_ID + ")";
+    static final String ADD_STOCK = "insert into " + STOCK_TABLE_NAME
+            + " (" + STOCK_ADDRESS_COLUMN + ")"
+            + "values (?)";
 
-    static final String UPDATE_STOCK = "call materik.update_stock(?,?)";
+    static final String UPDATE_STOCK = "update " + STOCK_TABLE_NAME
+            + " set " + STOCK_ADDRESS_COLUMN + " = ? "
+            + " where " + STOCK_ID_COLUMN + " = ?";
 
-    static final String REMOVE_STOCK = "call materik.remove_stock(?)";
+    static final String REMOVE_STOCK = "delete from " + STOCK_TABLE_NAME
+            + " where " + STOCK_ID_COLUMN + " = ?";
 
-    static final String ADD_ORDER = "call materik.add_order(?,?,?,?,?,?,?,"+ INSERTED_ID +")";
+    static final String ADD_ORDER = "insert into " + ORDER_TABLE_NAME
+            + "(" + ORDER_DATE_COLUMN + ","
+            + ORDER_STATUS_ID_COLUMN + ","
+            + ORDER_CLIENT_ID_COLUMN + ","
+            + ORDER_PHONE_NUMBER_COLUMN + ","
+            + ORDER_ADDRESS_COLUMN + ","
+            + ORDER_CLIENT_NAME_COLUMN + ","
+            + ORDER_SUM_COLUMN + ") "
+            + "VALUES (?,?,?,?,?,?,?)";
 
-    static final String BIND_PRODUCT = "call materik.bind_product(?,?,?,"+ INSERTED_ID +")";
+    static final String BIND_PRODUCT = "insert into " + ORDER_PRODUCT_TABLE_NAME
+            + " (" + ORDER_PRODUCT_ORDER_ID_COLUMN
+            + "," + ORDER_PRODUCT_PRODUCT_ID_COLUMN
+            + "," + ORDER_PRODUCT_AMOUNT_COLUMN + ")"
+            + " values (?,?,?)";
 
-    static final String UNBIND_PRODUCT = "call materik.unbind_product(?,?)";
+    static final String REMOVE_ORDER = "delete from " + ORDER_TABLE_NAME
+            + " where " + ORDER_ID_COLUMN + " = ?";
 
-    static final String REMOVE_ORDER = "call materik.remove_order(?)";
+    static final String GET_ORDER_PRODUCTS = "select "
+            + ORDER_PRODUCT_PRODUCT_ID_COLUMN + ","
+            + ORDER_PRODUCT_AMOUNT_COLUMN + " from "
+            + ORDER_PRODUCT_TABLE_NAME + " where "
+            + ORDER_PRODUCT_ORDER_ID_COLUMN + " = ?";
 
-    static final String GET_ORDER_PRODUCTS = "call materik.get_order_products(?)";
+    static final String RESET_STOCK_AMOUNT = "update " + PRODUCT_TABLE_NAME
+            + "set " + PRODUCT_STOCK_AMOUNT_COLUMN
+            + " = " + PRODUCT_STOCK_AMOUNT_COLUMN
+            + " + ?"
+            + " where " + PRODUCT_ID_COLUMN
+            + " = ?";
 
-    static final String RESET_STOCK_AMOUNT = "call materik.reset_stock_amount(?,?)";
+    static final String REMOVE_FROM_STOCK = "update " + PRODUCT_TABLE_NAME
+            + "set " + PRODUCT_STOCK_AMOUNT_COLUMN
+            + " = " + PRODUCT_STOCK_AMOUNT_COLUMN
+            + " - ?"
+            + " where " + PRODUCT_ID_COLUMN
+            + " = ?";
 
-    static final String REMOVE_FROM_STOCK = "call materik.remove_from_stock(?,?)";
+    static final String ADD_PRODUCT = "insert into " + PRODUCT_TABLE_NAME
+            + "(" + PRODUCT_TITLE_COLUMN + ","
+            + "(" + PRODUCT_FEATURES_COLUMN + ","
+            + "(" + PRODUCT_STOCK_AMOUNT_COLUMN + ","
+            + "(" + PRODUCT_PRICE_COLUMN + ","
+            + "(" + PRODUCT_METRICS_COLUMN + ","
+            + "(" + PRODUCT_IMAGE_URL + ","
+            + "(" + PRODUCT_DESCRIPTION_COLUMN + ","
+            + "(" + PRODUCT_ARTICUL_COLUMN + ","
+            + "(" + PRODUCT_CATEGORY_ID_COLUMN + ","
+            + "(" + PRODUCT_STOCK_ID_COLUMN + ") "
+            + "VALUES (?,?,?,?,?,?,?,?,?,?)";
 
-    static final String ADD_PRODUCT = "call materik.add_product(?,?,?,?,?,?,?,?,?,?,"+ INSERTED_ID +")";
+    static final String REMOVE_PRODUCT = "delete from " + PRODUCT_TABLE_NAME
+            + " where " + PRODUCT_ID_COLUMN + " = ?";
 
-    static final String REMOVE_PRODUCT = "call materik.remove_product(?)";
+    static final String GET_EMPLOYEES = "select * from " + ORDER_TABLE_NAME
+            + "inner join " + STATUS_TABLE_NAME
+            + " on " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
+            + " = " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
+            + " right join " + EMPLOYEES_TABLE_NAME
+            + " on " + EMPLOYEES_TABLE_NAME + "." + EMPLOYEE_ID_COLUMN
+            + " = " + ORDER_TABLE_NAME + "." + ORDER_EMPLOYEE_ID_COLUMN;
 
-    static final String GET_EMPLOYEES = "call materik.get_employees()";
+    static final String GET_EMPLOYEE_INFO = "select * from " + EMPLOYEES_TABLE_NAME
+            + " where " + EMPLOYEE_EMAIL_COLUMN + " = ?";
 
-    static final String GET_EMPLOYEE_INFO = "call materik.get_employee_info(?)";
+    static final String BIND_EMPLOYEE = "update " + ORDER_TABLE_NAME
+            + " set " + ORDER_EMPLOYEE_ID_COLUMN + " = ?"
+            + " , " + ORDER_STATUS_ID_COLUMN + " = ?"
+            + " where " + ORDER_ID_COLUMN + " = ?";
 
-    static final String BIND_EMPLOYEE = "call materik.bind_employee(?,?)";
-
-    static final String CHANGE_ORDER_STATUS = "call materik.set_order_status(?)";
-
-//    public interface RolesContract {
-//        int EDIT_CATALOG = 1;
-//        int READ_CLIENTS = 2;
-//        int EDIT_CLIENTS = 4;
-//        int READ_ORDERS = 8;
-//        int EDIT_ORDERS = 16;
-//    }
+    static final String CHANGE_ORDER_STATUS = "update " + ORDER_TABLE_NAME
+            + " set " + ORDER_STATUS_ID_COLUMN + " = ?";
 
 }

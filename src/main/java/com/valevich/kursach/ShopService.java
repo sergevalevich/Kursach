@@ -102,7 +102,7 @@ public class ShopService {
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
-        get("/catalog", (request, response) -> {
+        get("/client/catalog", (request, response) -> {
             try {
                 String token = request.headers("token");
                 if (token == null) {
@@ -122,11 +122,28 @@ public class ShopService {
             }
         });
 
+        get("/employee/catalog", (request, response) -> {
+            try {
+                String email = request.headers("email");
+                String password = request.headers("password");
+                if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
+                    response.status(HTTP_BAD_REQUEST);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                response.status(200);
+                response.type("application/json");
+                return dataToJson(dbHelper.getCatalog(email, password));
+            } catch (SQLException e) {
+                response.status(HTTP_BAD_REQUEST);
+                return dataToJson(new DefaultResponse(getMessage(e)));
+            }
+        });
+
         get("/stocks/get", (req, res) -> {
             try {
                 String email = req.headers("email");
                 String pass = req.headers("password");
-                if (email == null || pass == null) {
+                if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
@@ -237,7 +254,7 @@ public class ShopService {
             try {
                 String email = req.headers("email");
                 String pass = req.headers("password");
-                if (email == null || pass == null) {
+                if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
@@ -364,7 +381,7 @@ public class ShopService {
             try {
                 String email = req.headers("email");
                 String pass = req.headers("password");
-                if (email == null || pass == null) {
+                if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
@@ -538,7 +555,7 @@ public class ShopService {
             try {
                 String email = req.headers("email");
                 String pass = req.headers("password");
-                if (email == null || pass == null) {
+                if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
                     res.status(HTTP_BAD_REQUEST);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }

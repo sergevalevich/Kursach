@@ -14,7 +14,6 @@ public class EmployeeItem {
     private String position;
     private String phoneNumber;
     private String surname;
-    private String token;
     private String email;
 
     private List<OrderItem> orders;

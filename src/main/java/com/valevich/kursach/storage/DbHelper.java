@@ -58,9 +58,9 @@ public class DbHelper {
         }
     }
 
-    public List<CatalogItem> getCatalog() throws SQLException {
+    public List<CatalogItem> getCatalog(String dbUser, String dbPass) throws SQLException {
         List<CatalogItem> catalog = new ArrayList<>();
-        try (Connection connection = getConnection(ConstantsManager.ROOT_USER, ConstantsManager.ROOT_PASS);
+        try (Connection connection = getConnection(dbUser, dbPass);
              PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CATALOG);
              ResultSet result = statement.executeQuery()) {
 
@@ -83,6 +83,10 @@ public class DbHelper {
             }
         }
         return catalog;
+    }
+
+    public List<CatalogItem> getCatalog() throws SQLException {
+        return getCatalog(ConstantsManager.ROOT_USER, ConstantsManager.ROOT_PASS);
     }
 
     public List<StockItem> getStocks(String userEmail, String userPass) throws SQLException {
@@ -111,16 +115,17 @@ public class DbHelper {
         return stocks;
     }
 
-    public int insertStock(String address, String dbUser, String dbUserPass) throws SQLException {
+    public long insertStock(String address, String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
-             PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_STOCK)) {
+             PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_STOCK,
+                     Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, address);
             int rows = statement.executeUpdate();
             if (rows == 0) throw new SQLException(ConstantsManager.NO_ROWS_AFFECTED);
 
-            try (ResultSet resultSet = statement.executeQuery(ShopContract.GET_INSERTED_ID)) {
-                if (resultSet.next()) return resultSet.getInt(1);
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) return generatedKeys.getLong(1);
                 else throw new SQLException(ConstantsManager.NO_ID_OBTAINED);
             }
         }
@@ -324,16 +329,17 @@ public class DbHelper {
         }
     }
 
-    public int insertStatus(String description, String dbUser, String dbUserPass) throws SQLException {
+    public long insertStatus(String description, String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
-             PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_STATUS)) {
+             PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_STATUS,
+                     Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, description);
             int rows = statement.executeUpdate();
             if (rows == 0) throw new SQLException(ConstantsManager.NO_ROWS_AFFECTED);
 
-            try (ResultSet resultSet = statement.executeQuery(ShopContract.GET_INSERTED_ID)) {
-                if (resultSet.next()) return resultSet.getInt(1);
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) return generatedKeys.getLong(1);
                 else throw new SQLException(ConstantsManager.NO_ID_OBTAINED);
             }
         }
@@ -368,7 +374,7 @@ public class DbHelper {
 
         try (Connection connection = getConnection(ConstantsManager.ROOT_USER, ConstantsManager.ROOT_PASS)) {
             connection.setAutoCommit(false);
-            try (PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_ORDER);
+            try (PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_ORDER, Statement.RETURN_GENERATED_KEYS);
                  PreparedStatement removeFromStockStatement = connection.prepareStatement(ShopContract.REMOVE_FROM_STOCK);
                  PreparedStatement bindProductStatement = connection.prepareStatement(ShopContract.BIND_PRODUCT)) {
                 statement.setDate(1, date);
@@ -381,7 +387,8 @@ public class DbHelper {
 
                 int rows = statement.executeUpdate();
                 if (rows == 0) throw new SQLException(ConstantsManager.NO_ROWS_AFFECTED);
-                try (ResultSet resultSet = statement.executeQuery(ShopContract.GET_INSERTED_ID)) {
+
+                try (ResultSet resultSet = statement.getGeneratedKeys()) {
                     if (resultSet.next()) {
                         int orderId = resultSet.getInt(1);
                         for (ProductInOrder product : products) {
@@ -443,14 +450,15 @@ public class DbHelper {
         }
     }
 
-    public int insertProduct(String title, String features,
-                             int amount, double price,
-                             String metrics, String imageUrl,
-                             String description, String articul,
-                             int categoryId, int stockId,
-                             String dbUser, String dbUserPass) throws SQLException {
+    public long insertProduct(String title, String features,
+                              int amount, double price,
+                              String metrics, String imageUrl,
+                              String description, String articul,
+                              int categoryId, int stockId,
+                              String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
-             PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_PRODUCT)) {
+             PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_PRODUCT,
+                     Statement.RETURN_GENERATED_KEYS)) {
 
             statement.setString(1, title);
             statement.setString(2, features);
@@ -465,8 +473,8 @@ public class DbHelper {
             int rows = statement.executeUpdate();
             if (rows == 0) throw new SQLException(ConstantsManager.NO_ROWS_AFFECTED);
 
-            try (ResultSet resultSet = statement.executeQuery(ShopContract.GET_INSERTED_ID)) {
-                if (resultSet.next()) return resultSet.getInt(1);
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) return generatedKeys.getLong(1);
                 else throw new SQLException(ConstantsManager.NO_ID_OBTAINED);
             }
         }
@@ -517,7 +525,7 @@ public class DbHelper {
         }
     }
 
-    public boolean bindEmployee(int employeeId, int newOrderStatusId,String dbUser,String dbUserPass) throws SQLException {
+    public boolean bindEmployee(int employeeId, int newOrderStatusId, String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
              PreparedStatement statement = connection.prepareStatement(ShopContract.BIND_EMPLOYEE)) {
 
@@ -527,7 +535,7 @@ public class DbHelper {
         }
     }
 
-    public boolean setOrderStatus(int newOrderStatusId,String dbUser,String dbUserPass) throws SQLException {
+    public boolean setOrderStatus(int newOrderStatusId, String dbUser, String dbUserPass) throws SQLException {
         try (Connection connection = getConnection(dbUser, dbUserPass);
              PreparedStatement statement = connection.prepareStatement(ShopContract.CHANGE_ORDER_STATUS)) {
             statement.setInt(1, newOrderStatusId);
@@ -563,7 +571,6 @@ public class DbHelper {
              PreparedStatement statement = connection.prepareStatement(ShopContract.GET_ALL_TOKENS)) {
 
             statement.setString(1, token);
-            statement.setString(2, token);
 
             try (ResultSet result = statement.executeQuery()) {
                 return result.next();
@@ -633,7 +640,6 @@ public class DbHelper {
         employee.setPhoneNumber(resultSet.getString(ShopContract.EMPLOYEE_PHONE_COLUMN));
         employee.setPosition(resultSet.getString(ShopContract.EMPLOYEE_POSITION_COLUMN));
         employee.setSurname(resultSet.getString(ShopContract.EMPLOYEE_SURNAME_COLUMN));
-        employee.setToken(resultSet.getString(ShopContract.EMPLOYEE_TOKEN_COLUMN));
         employee.setEmail(resultSet.getString(ShopContract.EMPLOYEE_EMAIL_COLUMN));
         return employee;
     }
