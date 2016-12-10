@@ -23,7 +23,6 @@ import com.valevich.kursach.model.request.stock.NewStockPayload;
 import com.valevich.kursach.model.request.stock.UpdateStockPayload;
 import com.valevich.kursach.model.response.DefaultInsertResponse;
 import com.valevich.kursach.model.response.DefaultResponse;
-import com.valevich.kursach.model.response.user.ClientRegistration;
 import com.valevich.kursach.storage.DbHelper;
 import com.valevich.kursach.util.ConstantsManager;
 
@@ -31,7 +30,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.sql.SQLException;
 
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static spark.Spark.get;
 import static spark.Spark.post;
@@ -47,7 +45,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 NewCategoryPayload newCategory = mapper.readValue(req.body(), NewCategoryPayload.class);
                 if (!newCategory.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 long id = dbHelper.insertCategory(newCategory.getName(),
@@ -58,7 +56,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultInsertResponse(id));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -67,7 +65,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 DeleteCategoryPayload categoryToRemove = mapper.readValue(req.body(), DeleteCategoryPayload.class);
                 if (!categoryToRemove.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasDeleted = dbHelper.removeCategory(categoryToRemove.getId(),
@@ -77,7 +75,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -86,7 +84,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 UpdateCategoryPayload categoryToUpdate = mapper.readValue(req.body(), UpdateCategoryPayload.class);
                 if (!categoryToUpdate.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasUpdated = dbHelper.updateCategory(categoryToUpdate.getId(),
@@ -98,7 +96,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -106,7 +104,7 @@ public class ShopService {
             try {
                 String token = request.headers("token");
                 if (token == null) {
-                    response.status(HTTP_BAD_REQUEST);
+                    response.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 if (!dbHelper.isUserExist(token)) {
@@ -117,7 +115,7 @@ public class ShopService {
                 response.type("application/json");
                 return dataToJson(dbHelper.getCatalog());
             } catch (SQLException e) {
-                response.status(HTTP_BAD_REQUEST);
+                response.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -127,14 +125,14 @@ public class ShopService {
                 String email = request.headers("email");
                 String password = request.headers("password");
                 if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
-                    response.status(HTTP_BAD_REQUEST);
+                    response.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 response.status(200);
                 response.type("application/json");
                 return dataToJson(dbHelper.getCatalog(email, password));
             } catch (SQLException e) {
-                response.status(HTTP_BAD_REQUEST);
+                response.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -144,14 +142,14 @@ public class ShopService {
                 String email = req.headers("email");
                 String pass = req.headers("password");
                 if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(dbHelper.getStocks(email, pass));
             } catch (SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -161,7 +159,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 NewStockPayload newStock = mapper.readValue(req.body(), NewStockPayload.class);
                 if (!newStock.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 long id = dbHelper.insertStock(newStock.getAddress(),
@@ -171,7 +169,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultInsertResponse(id));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -180,7 +178,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 DeleteStockPayload stockToRemove = mapper.readValue(req.body(), DeleteStockPayload.class);
                 if (!stockToRemove.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasDeleted = dbHelper.removeStock(stockToRemove.getId(),
@@ -190,7 +188,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -199,7 +197,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 UpdateStockPayload stockToUpdate = mapper.readValue(req.body(), UpdateStockPayload.class);
                 if (!stockToUpdate.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasUpdated = dbHelper.updateStock(stockToUpdate.getId(),
@@ -210,25 +208,24 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
 
-        post("/client/register", (req, res) -> {
+        post("/client/signUp", (req, res) -> {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 ClientAuthPayload newClient = mapper.readValue(req.body(), ClientAuthPayload.class);
                 if (!newClient.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
-                String token = dbHelper.insertClient(newClient.getEmail(), newClient.getPassword());
                 res.status(200);
                 res.type("application/json");
-                return dataToJson(new ClientRegistration(token));
+                return dataToJson(dbHelper.insertClient(newClient.getEmail(), newClient.getPassword()));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -238,14 +235,30 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 ClientAuthPayload clientPayload = mapper.readValue(req.body(), ClientAuthPayload.class);
                 if (!clientPayload.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(dbHelper.getClientInfo(clientPayload.getEmail(), clientPayload.getPassword()));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
+                return dataToJson(new DefaultResponse(getMessage(e)));
+            }
+        });
+
+        get("/client/getOrders", (req, res) -> {
+            try {
+                String token = req.headers("token");
+                if (token == null || token.isEmpty()) {
+                    res.status(200);
+                    return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
+                }
+                res.status(200);
+                res.type("application/json");
+                return dataToJson(dbHelper.getClientOrders(token));
+            } catch (SQLException e) {
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -255,14 +268,14 @@ public class ShopService {
                 String email = req.headers("email");
                 String pass = req.headers("password");
                 if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(dbHelper.getClients(email, pass));
             } catch (SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -272,7 +285,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 AddClientPayload newClient = mapper.readValue(req.body(), AddClientPayload.class);
                 if (!newClient.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
 
@@ -289,7 +302,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultInsertResponse(id));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -299,7 +312,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 UpdateClientPayload clientToUpdate = mapper.readValue(req.body(), UpdateClientPayload.class);
                 if (!clientToUpdate.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
 
@@ -318,7 +331,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -328,7 +341,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 UpdatePersonalInfoPayload clientInfoToUpdate = mapper.readValue(req.body(), UpdatePersonalInfoPayload.class);
                 if (!clientInfoToUpdate.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 if (!dbHelper.isUserExist(clientInfoToUpdate.getToken())) {
@@ -350,7 +363,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -360,7 +373,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 DeleteClientPayload clientToRemove = mapper.readValue(req.body(), DeleteClientPayload.class);
                 if (!clientToRemove.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
 
@@ -372,7 +385,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -382,14 +395,14 @@ public class ShopService {
                 String email = req.headers("email");
                 String pass = req.headers("password");
                 if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(dbHelper.getOrders(email, pass));
             } catch (SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(getMessage(e));
             }
         });
@@ -399,7 +412,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 NewStatusPayload newStatus = mapper.readValue(req.body(), NewStatusPayload.class);
                 if (!newStatus.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 long id = dbHelper.insertStatus(newStatus.getDescription(),
@@ -409,7 +422,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultInsertResponse(id));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -418,7 +431,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 DeleteStatusPayload statusToRemove = mapper.readValue(req.body(), DeleteStatusPayload.class);
                 if (!statusToRemove.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasDeleted = dbHelper.removeStatus(statusToRemove.getId(),
@@ -428,7 +441,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -437,7 +450,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 UpdateStatusPayload statusToUpdate = mapper.readValue(req.body(), UpdateStatusPayload.class);
                 if (!statusToUpdate.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasUpdated = dbHelper.updateStatus(statusToUpdate.getId(),
@@ -448,7 +461,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -458,7 +471,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 NewOrderPayload newOrder = mapper.readValue(req.body(), NewOrderPayload.class);
                 if (!newOrder.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 if (!dbHelper.isUserExist(newOrder.getToken())) {
@@ -476,7 +489,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(isSuccessful ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -486,7 +499,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 DeleteOrderPayload orderToRemove = mapper.readValue(req.body(), DeleteOrderPayload.class);
                 if (!orderToRemove.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasDeleted = dbHelper.removeOrder(orderToRemove.getId(),
@@ -496,7 +509,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -506,7 +519,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 NewProductPayload newProduct = mapper.readValue(req.body(), NewProductPayload.class);
                 if (!newProduct.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
 
@@ -526,7 +539,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultInsertResponse(id));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -536,7 +549,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 DeleteProductPayload productToRemove = mapper.readValue(req.body(), DeleteProductPayload.class);
                 if (!productToRemove.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasDeleted = dbHelper.removeProduct(productToRemove.getId(),
@@ -546,7 +559,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasDeleted ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -556,14 +569,14 @@ public class ShopService {
                 String email = req.headers("email");
                 String pass = req.headers("password");
                 if (email == null || pass == null || email.isEmpty() || pass.isEmpty()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(dbHelper.getEmployees(email, pass));
             } catch (SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -573,14 +586,14 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 AccessPayload authPayload = mapper.readValue(req.body(), AccessPayload.class);
                 if (!authPayload.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 res.status(200);
                 res.type("application/json");
                 return dataToJson(dbHelper.getEmployeeInfo(authPayload.getUserEmail(), authPayload.getUserPassword()));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -590,7 +603,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 BindEmployeePayload payload = mapper.readValue(req.body(), BindEmployeePayload.class);
                 if (!payload.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasUpdated = dbHelper.bindEmployee(payload.getEmployeeId(),
@@ -601,7 +614,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });
@@ -611,7 +624,7 @@ public class ShopService {
                 ObjectMapper mapper = new ObjectMapper();
                 SetOrderStatusPayload payload = mapper.readValue(req.body(), SetOrderStatusPayload.class);
                 if (!payload.isValid()) {
-                    res.status(HTTP_BAD_REQUEST);
+                    res.status(200);
                     return dataToJson(new DefaultResponse(ConstantsManager.INVALID_REQUEST));
                 }
                 boolean hasUpdated = dbHelper.setOrderStatus(
@@ -622,7 +635,7 @@ public class ShopService {
                 res.type("application/json");
                 return dataToJson(new DefaultResponse(hasUpdated ? ConstantsManager.OPERATION_SUCCESSFULL : ConstantsManager.INVALID_REQUEST));
             } catch (JsonParseException | JsonMappingException | SQLException e) {
-                res.status(HTTP_BAD_REQUEST);
+                res.status(200);
                 return dataToJson(new DefaultResponse(getMessage(e)));
             }
         });

@@ -158,7 +158,7 @@ class ShopContract {
             + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN;
 
 
-    static final String GET_CLIENT_INFO = "SELECT * FROM " + ORDER_TABLE_NAME
+    static final String GET_CLIENT_ORDERS = "SELECT * FROM " + ORDER_TABLE_NAME
             + " INNER JOIN " + STATUS_TABLE_NAME
             + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
             + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
@@ -178,35 +178,13 @@ class ShopContract {
             + " ON " + CLIENTS_TABLE_NAME + "." + CLIENT_ID_COLUMN
             + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN
             + " WHERE "
-            + CLIENTS_TABLE_NAME + "." + CLIENT_EMAIL_COLUMN
-            + " = ? AND "
-            + CLIENTS_TABLE_NAME + "." + CLIENT_PASSWORD_COLUMN + " = ?";
+            + CLIENTS_TABLE_NAME + "." + CLIENT_TOKEN_COLUMN
+            + " = ?";
 
-    /*
-        static final String GET_CLIENT_INFO = "SELECT * FROM " + CLIENTS_TABLE_NAME
-            + " LEFT JOIN " + ORDER_TABLE_NAME
-            + " ON " + CLIENTS_TABLE_NAME + "." + CLIENT_ID_COLUMN
-            + " = " + ORDER_TABLE_NAME + "." + ORDER_CLIENT_ID_COLUMN
-            + " INNER JOIN " + STATUS_TABLE_NAME
-            + " ON " + ORDER_TABLE_NAME + "." + ORDER_STATUS_ID_COLUMN
-            + " = " + STATUS_TABLE_NAME + "." + STATUS_ID_COLUMN
-            + " LEFT JOIN " + EMPLOYEES_TABLE_NAME
-            + " ON " + ORDER_TABLE_NAME + "." + ORDER_EMPLOYEE_ID_COLUMN
-            + " = " + EMPLOYEES_TABLE_NAME + "." + EMPLOYEE_ID_COLUMN
-            + " INNER JOIN " + ORDER_PRODUCT_TABLE_NAME
-            + " ON " + ORDER_TABLE_NAME + "." + ORDER_ID_COLUMN
-            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_ORDER_ID_COLUMN
-            + " INNER JOIN " + PRODUCT_TABLE_NAME
-            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_ID_COLUMN
-            + " = " + ORDER_PRODUCT_TABLE_NAME + "." + ORDER_PRODUCT_PRODUCT_ID_COLUMN
-            + " INNER JOIN " + STOCK_TABLE_NAME
-            + " ON " + PRODUCT_TABLE_NAME + "." + PRODUCT_STOCK_ID_COLUMN
-            + " = " + STOCK_TABLE_NAME + "." + STOCK_ID_COLUMN
-            + " WHERE "
-            + CLIENTS_TABLE_NAME + "." + CLIENT_EMAIL_COLUMN
-            + " = ? AND "
-            + CLIENTS_TABLE_NAME + "." + CLIENT_PASSWORD_COLUMN + " = ?";
-     */
+    static final String GET_CLIENT_INFO = "SELECT * FROM " + CLIENTS_TABLE_NAME
+            + " WHERE " + CLIENT_EMAIL_COLUMN + " = ? AND "
+            + CLIENT_PASSWORD_COLUMN + " = ?";
+
 
     static final String GET_ORDERS = "SELECT * FROM " + PRODUCT_TABLE_NAME
             + " INNER JOIN " + STOCK_TABLE_NAME

@@ -150,7 +150,7 @@ public class DbHelper {
         }
     }
 
-    public String insertClient(String email, String password) throws SQLException {
+    public ClientInfo insertClient(String email, String password) throws SQLException {
         try (Connection connection = getConnection(ConstantsManager.ROOT_USER, ConstantsManager.ROOT_PASS);
              PreparedStatement statement = connection.prepareStatement(ShopContract.ADD_CLIENT)) {
 
@@ -161,7 +161,10 @@ public class DbHelper {
 
             int rows = statement.executeUpdate();
             if (rows == 0) throw new SQLException(ConstantsManager.NO_ROWS_AFFECTED);
-            return token;
+            ClientInfo clientInfo = new ClientInfo();
+            clientInfo.setToken(token);
+            clientInfo.setEmail(email);
+            return clientInfo;
         }
     }
 
@@ -226,12 +229,11 @@ public class DbHelper {
         }
     }
 
-    public ClientInfo getClientInfo(String email, String password) throws SQLException {
+    public ClientInfo getClientOrders(String token) throws SQLException {
         try (Connection connection = getConnection(ConstantsManager.ROOT_USER, ConstantsManager.ROOT_PASS);
-             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CLIENT_INFO)) {
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CLIENT_ORDERS)) {
 
-            statement.setString(1, email);
-            statement.setString(2, password);
+            statement.setString(1, token);
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 ClientInfo client = null;
@@ -251,6 +253,21 @@ public class DbHelper {
                 }
                 if (client == null) throw new SQLException(ConstantsManager.WRONG_CREDENTIALS);
                 return client;
+            }
+        }
+    }
+
+    public ClientInfo getClientInfo(String email, String password) throws SQLException {
+        try (Connection connection = getConnection(ConstantsManager.ROOT_USER, ConstantsManager.ROOT_PASS);
+             PreparedStatement statement = connection.prepareStatement(ShopContract.GET_CLIENT_INFO)) {
+
+            statement.setString(1, email);
+            statement.setString(2,password);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return createClient(resultSet);
+                } else throw new SQLException(ConstantsManager.WRONG_CREDENTIALS);
             }
         }
     }
